@@ -21,12 +21,12 @@ const config: Config = {
   ollamaModel: 'qwen2.5:0.5b',  // Fast model optimized for Rock 5B
 
   // Activity monitoring
-  inactivityThresholdMinutes: 60,
-  checkActivityIntervalMinutes: 15,
+  inactivityThresholdMinutes: 5,
+  checkActivityIntervalMinutes: 2,
 
   // Scheduled posting
-  scheduledJokeCron: '0 */3 * * *',
-  scheduledConversationCron: '0 */4 * * *',
+  scheduledJokeCron: '*/5 * * * *',  // Every 5 minutes (for testing)
+  scheduledConversationCron: '*/7 * * * *',  // Every 7 minutes (for testing)
 
   // Channel settings - leave empty to work in all channels, or specify channel IDs
   allowedChannels: ['1455691731268796426'],  // test channel
