@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # Ollama service for AI model
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    # RK3588 Rock 5B: Runs on CPU (ARM64)
+    # Note: llama3.1 will be slower on CPU-only
+    # For smaller/faster models, consider using llama3.2:1b or qwen2.5:0.5b
+
+    # For NVIDIA GPU support (not applicable to RK3588), uncomment:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # Discord AI Bot
+  discord-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: discord-ai-bot
+    depends_on:
+      - ollama
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+    env_file:
+      - .env
+    volumes:
+      # Mount config for easy updates without rebuild
+      - ./config.js:/app/config.js:ro
+    restart: unless-stopped
+    # Wait for Ollama to be ready before starting the bot
+    command: >
+      sh -c "
+        echo 'Waiting for Ollama to be ready...' &&
+        until wget -q --spider http://ollama:11434/api/tags 2>/dev/null; do
+          echo 'Ollama is unavailable - sleeping' &&
+          sleep 5
+        done &&
+        echo 'Ollama is ready - pulling llama3.1 model...' &&
+        wget --post-data='{\"name\":\"llama3.1\"}' \
+          --header='Content-Type: application/json' \
+          -O - http://ollama:11434/api/pull 2>/dev/null |
+          while read line; do echo \"\$$line\"; done &&
+        echo 'Starting Discord bot...' &&
+        pnpm start
+      "
+
+volumes:
+  ollama_data:
+    driver: local
