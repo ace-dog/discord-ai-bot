@@ -13,6 +13,12 @@ services:
     # RK3588 Rock 5B: Runs on CPU (ARM64)
     # Note: llama3.1 will be slower on CPU-only
     # For smaller/faster models, consider using llama3.2:1b or qwen2.5:0.5b
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
     # For NVIDIA GPU support (not applicable to RK3588), uncomment:
     # deploy:
@@ -28,7 +34,8 @@ services:
     image: alpine:latest
     container_name: ollama-puller
     depends_on:
-      - ollama
+      ollama:
+        condition: service_healthy
     restart: "no"
     command:
       - /bin/sh
@@ -46,6 +53,11 @@ services:
           -H 'Content-Type: application/json' \
           -d '{"name":"qwen2.5:0.5b"}'
         echo 'Model pulled successfully!'
+        echo 'Warming up model (first inference)...'
+        curl -X POST http://ollama:11434/api/generate \
+          -H 'Content-Type: application/json' \
+          -d '{"model":"qwen2.5:0.5b","prompt":"Hello","stream":false}' > /dev/null
+        echo 'Model is ready for use!'
 
   # Discord AI Bot
   discord-bot:

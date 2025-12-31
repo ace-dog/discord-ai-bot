@@ -18,7 +18,7 @@ const config: Config = {
   commandPrefix: '!',
 
   // AI Model settings
-  ollamaModel: 'llama3.1',
+  ollamaModel: 'qwen2.5:0.5b',  // Fast model optimized for Rock 5B
 
   // Activity monitoring
   inactivityThresholdMinutes: 60,
@@ -56,7 +56,8 @@ const config: Config = {
   minMessageLength: 10,
 
   // Ollama settings
-  ollamaHost: 'http://localhost:11434'
+  // Use 'ollama' service name when running in Docker, localhost otherwise
+  ollamaHost: process.env.OLLAMA_HOST || 'http://ollama:11434'
 };
 
 export default config;
